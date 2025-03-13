@@ -45,7 +45,7 @@ const fetchReadhubDaily = async () => {
 }
 
 // 执行函数
-fetchReadhubDaily()
+// fetchReadhubDaily()
 
 module.exports = {
     fetchReadhubDaily

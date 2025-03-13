@@ -7,10 +7,11 @@ const axios = require('axios')
 const { v4: uuidv4 } = require('uuid')
 const fs = require('fs-extra')
 const { processPodcast } = require('./podcast_processor')
+require('dotenv').config()
 
-const API_KEY = '9aVv3cIpw8cIBYXnxtinANeDsjhtpY0H'
-const appid = '7785276264'
-const voice_type = 'BV406_V2_streaming'
+const API_KEY = process.env.SEEDTTS_API_KEY
+const appid = process.env.SEEDTTS_APPID
+const voice_type = process.env.SEEDTTS_VOICE_TYPE
 
 const queryTaskAndSave = async (task_id, outputFileName) => {
     if (!task_id) {

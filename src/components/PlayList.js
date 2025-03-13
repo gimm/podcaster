@@ -23,7 +23,13 @@ const PlayList = ({ tracks, currentTrack, onPlay, isLoading, onRefresh }) => {
     }
 
     // 格式化日期
-    const formatDate = str => str.split('.')[0].replace('T', ' ')
+    const formatDate = str => new Date(str).toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+    })
 
     return (
         <div className="p-4 sm:p-6">
