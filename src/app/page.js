@@ -65,10 +65,10 @@ export default function Home() {
             const response = await fetch("/api/mp3")
             const data = await response.json()
             setTotal(data.total)
-            setMp3List(data.mp3Files.map(x => {
+            setMp3List(data.mp3Files.map((x, index) => {
                 return {
                     ...x,
-                    title: fileNameList.find(y => y.id === x.id)?.title || x.name
+                    title: `ep${data.total - index}. ${fileNameList.find(y => y.id === x.id)?.title || x.name}`
                 }
             }))
 
