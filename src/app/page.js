@@ -37,6 +37,7 @@ export default function Home() {
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState(null)
     const audioRef = useRef(null)
+    const [toast, setToast] = useState(null)
 
     // 从 localStorage 加载数据
     useEffect(() => {
@@ -235,7 +236,7 @@ export default function Home() {
     }, [mp3Generating])
 
     const handleSyncPodcast = async () => {
-         try {
+        try {
             setIsLoading(true)
             const response = await fetch("/api/mp3", {
                 method: "POST",
@@ -250,12 +251,22 @@ export default function Home() {
                     const newFileNameList = [data.mp3Generating, ...fileNameList].slice(0, 100)
                     localStorage.setItem(MP3_FILE_LIST_KEY, JSON.stringify(newFileNameList))
                     setFileNameList(newFileNameList)
+                    setToast({
+                        type: 'success',
+                        message: `添加成功`
+                    })
+                } else {
+                    throw new Error(data.message)
                 }
             } else {
-                console.error("添加 MP3 文件失败")
+                throw new Error("添加播客失败")
             }
         } catch (error) {
-            console.error("添加 MP3 文件失败:", error)
+            console.error("添加播客失败:", error)
+            setToast({
+                type: 'error',
+                message: `添加播客失败: ${error.message}`
+            })
         } finally {
             setIsLoading(false)
         }
@@ -264,6 +275,31 @@ export default function Home() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-indigo-900 text-white">
             <style dangerouslySetInnerHTML={{ __html: customStyles }} />
+            {/* Toast 提示 */}
+            {toast && (
+                <div className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 p-4 rounded-lg shadow-lg flex items-center gap-2 animate-fade-in ${
+                    toast.type === 'error' ? 'bg-red-500/90' : 'bg-green-500/90'
+                }`}>
+                    {toast.type === 'error' ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        </svg>
+                    ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                    )}
+                    <span>{toast.message}</span>
+                    <button
+                        onClick={() => setToast(null)}
+                        className="ml-2 text-white hover:text-gray-200"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+            )}
             {/* 隐藏的音频元素 */}
             {currentTrack && (
                 <audio

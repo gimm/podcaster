@@ -1,4 +1,3 @@
-
 const axios = require('axios')
 const cheerio = require('cheerio')
 
@@ -19,6 +18,15 @@ const fetchReadhubDaily = async () => {
 
         // 使用 cheerio 加载 HTML
         const $ = cheerio.load(html)
+
+        const dateStr = $('[class*="style_date_"]').text().trim()
+        const d = new Date()
+        const todayStr = [d.getFullYear(), d.getMonth() + 1, d.getDate()].map(item => item.toString().padStart(2, '0')).join('.')
+
+        if (dateStr !== todayStr) {
+            return null
+        }
+
 
         // 查找所有指向话题的链接元素
         const topicLinks = $('article div[class*="style_title"]')

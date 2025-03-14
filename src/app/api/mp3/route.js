@@ -54,9 +54,15 @@ export async function GET() {
 export async function POST() {
     try {
         const news = await fetchReadhubDaily()
+        if (!news) {
+            return NextResponse.json({
+                success: false,
+                message: "没有获取到新闻",
+            })
+        }
         const d = new Date()
         const showNotes = `<speak>
-            今天是${d.getFullYear()}年${d.getMonth()}月${d.getDate()}日，星期${d.getDay()}。以下是最新科技动态。
+            今天是${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日，星期${d.getDay()}。以下是最新科技动态。
             <break strength="strong"></break>
             ${news.map((item, index) => `
                 <audio src="https://sfs-public.shangdejigou.cn/fe/zttbm/page-turn-effect.mp3"></audio>

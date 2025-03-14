@@ -4,7 +4,6 @@
  */
 
 const axios = require('axios')
-const { v4: uuidv4 } = require('uuid')
 const fs = require('fs-extra')
 const { processPodcast } = require('./podcast_processor')
 require('dotenv').config()
@@ -79,7 +78,7 @@ const submitTask = async (text, outputFileName) => {
 
 
     // 构建请求参数
-    const reqid = uuidv4()
+    const reqid = Math.random().toString(36).substring(2, 15)
     const payload = {
         appid,
         "reqid": reqid,
