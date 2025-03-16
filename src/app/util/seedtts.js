@@ -78,7 +78,7 @@ const submitTask = async (text, outputFileName) => {
 
 
     // 构建请求参数
-    const reqid = Math.random().toString(36).substring(2, 15)
+    const reqid = (Math.random().toString(16) + Date.now()).slice(-24)
     const payload = {
         appid,
         "reqid": reqid,
