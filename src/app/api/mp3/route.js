@@ -62,7 +62,7 @@ export async function POST() {
         }
         const d = new Date()
         const showNotes = `<speak>
-            今天是${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日，星期${d.getDay()}。以下是最新科技动态。
+            今天是${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日，星期${d.getDay() === 0 ? "日" : d.getDay()}。以下是最新科技动态。
             <break strength="strong"></break>
             ${news.map((item, index) => `
                 <audio src="https://sfs-public.shangdejigou.cn/fe/zttbm/page-turn-effect.mp3"></audio>
