@@ -16,6 +16,8 @@ if (!fs.existsSync(MP3_DIR)) {
 
 // 获取 MP3 文件列表
 export async function GET() {
+    const { searchParams } = new URL(request.url)
+    const limit = Number(searchParams.get('limit')) || 5
     try {
         const files = fs.readdirSync(MP3_DIR)
         const total = files.length
@@ -34,7 +36,7 @@ export async function GET() {
                 }
             })
             .sort((a, b) => b.lastModified - a.lastModified)
-            .slice(0, 5)
+            .slice(0, limit)
 
         return NextResponse.json({
             total,
@@ -53,6 +55,18 @@ export async function GET() {
 // 生成 mp3 文件
 export async function POST() {
     try {
+        const d = new Date()
+        const [year, month, day] = [d.getFullYear(), d.getMonth() + 1, d.getDate()]
+        const id = `${year}-${month}-${day}`
+        const filepath = path.join(MP3_DIR, `${id}.mp3`)
+        // 如果文件存在，则返回
+        if (fs.existsSync(filepath)) {
+            return NextResponse.json({
+                success: true,
+                message: "文件已存在",
+            })
+        }
+
         const news = await fetchReadhubDaily()
         if (!news) {
             return NextResponse.json({
@@ -60,9 +74,9 @@ export async function POST() {
                 message: "没有获取到新闻",
             })
         }
-        const d = new Date()
+        const dayOfWeek = d.getDay() === 0 ? "日" : d.getDay()
         const showNotes = `<speak>
-            今天是${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日，星期${d.getDay() === 0 ? "日" : d.getDay()}。以下是最新科技动态。
+            今天是${year}年${month}月${day}日，星期${dayOfWeek}。以下是最新科技动态。
             <break strength="strong"></break>
             ${news.map((item, index) => `
                 <audio src="https://sfs-public.shangdejigou.cn/fe/zttbm/page-turn-effect.mp3"></audio>
@@ -75,8 +89,6 @@ export async function POST() {
         </speak>`
 
 
-        const id = String(new Date().getTime())
-        const filepath = path.join(MP3_DIR, `${id}.mp3`)
         const title = news[0].title
         await submitTask(showNotes, filepath)
 
