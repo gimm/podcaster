@@ -15,7 +15,7 @@ if (!fs.existsSync(MP3_DIR)) {
 
 
 // 获取 MP3 文件列表
-export async function GET() {
+export async function GET(request) {
     const { searchParams } = new URL(request.url)
     const limit = Number(searchParams.get('limit')) || 5
     try {
