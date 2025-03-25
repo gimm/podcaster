@@ -30,7 +30,7 @@ export async function GET(request) {
                 return {
                     id: file.replace(".mp3", ""),
                     name: file.replace(".mp3", "").replace(/-/g, " "),
-                    path: `/mp3/${file}`,
+                    path: `/podcaster/mp3/${file}`,
                     size: stats.size,
                     lastModified: stats.mtime,
                 }
