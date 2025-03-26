@@ -1,11 +1,17 @@
-# 第一阶段：构建环境
-FROM node:18-bullseye-slim AS builder
+# 构建环境
+FROM node:18-bullseye-slim
 
-# 配置国内镜像源加速（清华源）
+# 设置工作目录
+WORKDIR /app
+
+# 设置时区环境变量
+ENV TZ=Asia/Shanghai
+
+# 配置国内镜像源加速
 RUN sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list \
     && sed -i 's/security.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list
 
-# 安装系统级依赖（注意行尾必须加 \ ）
+# 安装系统级依赖
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     libnss3 \
@@ -15,27 +21,31 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgtk-3-0 \
     libxcomposite1 \
     ttf-wqy-microhei \
-    && rm -rf /var/lib/apt/lists/*  # 清理缓存必须在同一行
+    && rm -rf /var/lib/apt/lists/* \
+    # 设置时区
+    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
+    && echo $TZ > /etc/timezone
 
-# 安装 Playwright
-RUN npm config set registry https://registry.npmmirror.com \
-    && npm install playwright@1.42.0 -g \
-    && npx playwright install-deps chromium \
-    && npx playwright install chromium
+# 配置 npm
+RUN npm config set registry https://registry.npmmirror.com
 
-# 第二阶段：生产环境
-FROM node:18-bullseye-slim
-WORKDIR /app
+# 复制项目依赖文件
+COPY package*.json ./
 
-# 复制构建结果
-COPY --from=builder /usr/local/ /usr/local/
-COPY --from=builder /etc/apt/sources.list /etc/apt/sources.list
-COPY --from=builder /usr/lib/chromium /usr/lib/chromium
+# 安装依赖
+RUN npm ci
+
+# 复制项目文件
+COPY . .
+
+# 构建应用
+RUN npm run build
 
 # 验证环境
 RUN node -v \
     && npm -v \
     && ffmpeg -version \
-    && npx playwright --version
+    && date
 
-# 部署应用
+# 启动命令
+CMD ["npm", "run", "start"]
