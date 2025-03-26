@@ -6,13 +6,14 @@
 const axios = require('axios')
 const fs = require('fs-extra')
 const { processPodcast } = require('./podcast_processor')
+const { xyzUploader } = require('./xyz_uploader')
 require('dotenv').config()
 
 const API_KEY = process.env.SEEDTTS_API_KEY
 const appid = process.env.SEEDTTS_APPID
 const voice_type = process.env.SEEDTTS_VOICE_TYPE
 
-const queryTaskAndSave = async (task_id, outputFileName) => {
+const queryTaskAndSave = async (task_id, epTitle, outputFileName) => {
     if (!task_id) {
         throw new Error('task id不能为空')
     }
@@ -42,14 +43,40 @@ const queryTaskAndSave = async (task_id, outputFileName) => {
 
         if (audio_url) {
             console.log('音频URL:', audio_url)
-            processPodcast(audio_url, outputFileName)
+            const mp3path = await processPodcast(audio_url, outputFileName)
+
+
+            // 日志函数
+            const logger = message => console.log(`[${new Date().toLocaleTimeString()}] ${message}`)
+
+            try {
+                console.log('开始上传播客...')
+
+                // 新的简化调用方式
+                const result = await xyzUploader(epTitle, mp3path, {
+                    // podcastId: '您的播客ID',  // 可选
+                    // chromePath: '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',  // 例如：C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe
+                    // tokenFile: './my-token.json',  // 指定一个自定义token文件路径
+                    headless: true,  // 设置为false可以看到浏览器操作过程，便于调试
+                    logger: logger
+                })
+
+                if (result) {
+                    console.log('✅ 播客上传成功!')
+                } else {
+                    console.log('❌ 播客上传失败')
+                }
+            } catch (error) {
+                console.error('上传过程中发生错误:', error.message)
+            }
+
             return
         }
 
         if (task_status === 0) {
             console.log('合成中...')
             setTimeout(() => {
-                return queryTaskAndSave(task_id, outputFileName)
+                return queryTaskAndSave(task_id, epTitle, outputFileName)
             }, 1000)
         }
 
@@ -71,7 +98,7 @@ const queryTaskAndSave = async (task_id, outputFileName) => {
     }
 }
 
-const submitTask = async (text, outputFileName) => {
+const submitTask = async (title, text, outputFileName) => {
     if (!text) {
         throw new Error('文本内容不能为空')
     }
@@ -80,9 +107,9 @@ const submitTask = async (text, outputFileName) => {
     // 构建请求参数
     const reqid = (Math.random().toString(16) + Date.now()).slice(-24)
     const payload = {
+        text,
         appid,
         "reqid": reqid,
-        text,
         "format": "mp3",
         voice_type,
         "sample_rate": 24000,
@@ -106,7 +133,7 @@ const submitTask = async (text, outputFileName) => {
         const {task_id, task_status } = response.data
         if (task_status === 0 && task_id) {
             console.log('任务提交成功，开始查询任务状态...')
-            return queryTaskAndSave(task_id, outputFileName)
+            return queryTaskAndSave(task_id, title, outputFileName)
         }
 
         console.log('合成失败\n\n', response.data)

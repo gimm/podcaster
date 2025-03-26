@@ -51,10 +51,25 @@ export async function GET(request) {
     }
 }
 
-
+const isDebug = process.env.IS_DEBUG === "true"
 // 生成 mp3 文件
 export async function POST() {
     try {
+
+        if (isDebug) {
+            const _id = `{debug${+Date.now()}`
+            const _filepath = path.join(MP3_DIR, `${_id}.mp3`)
+            const _title = '这是一个 debug 测试'
+            await submitTask(_title, '内容如下：这是一个 debug 测试', _filepath)
+            return NextResponse.json({
+                success: true,
+                mp3Generating: {
+                    id: _id,
+                    title: _title,
+                },
+            })
+        }
+
         const d = new Date()
         const [year, month, day] = [d.getFullYear(), d.getMonth() + 1, d.getDate()]
         const id = `${year}-${month}-${day}`
@@ -90,7 +105,7 @@ export async function POST() {
 
 
         const title = news[0].title
-        await submitTask(showNotes, filepath)
+        await submitTask(title, showNotes, filepath)
 
         return NextResponse.json({
             success: true,

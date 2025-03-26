@@ -180,6 +180,7 @@ const processPodcast = async (podcastUrl, outputFileName) => {
         // 清理临时文件
         fs.unlinkSync(config.tempPodcastFile)
         console.log('处理完成！最终文件保存为:', path.resolve(outputFileName))
+        return path.resolve(outputFileName)
     } catch (error) {
         console.error('处理播客时出错:', error.message)
 
