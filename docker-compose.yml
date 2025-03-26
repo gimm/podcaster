@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  app:
+    image: node18-ffmpeg-playwright:1.0
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+    ports:
+      - "9000:9000"
+    environment:
+      - HOST=0.0.0.0
+    command: sh -c "npm install && npm run build && npm run start"
