@@ -5,8 +5,6 @@ const path = require('path')
 const fs = require('fs')
 const { setupTokenRefreshInterceptor } = require('./token')
 
-// 初始化应用时设置token刷新拦截器
-setupTokenRefreshInterceptor()
 
 /**
  * 小宇宙播客上传工具
@@ -101,6 +99,8 @@ async function xyzUploader(title, mp3path, options = {}) {
         // 创建新页面
         log('创建页面...')
         const page = await context.newPage()
+
+        setupTokenRefreshInterceptor(page, tokenData)
 
         // 设置localStorage
         const localStorageScript = `
