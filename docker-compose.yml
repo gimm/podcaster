@@ -1,20 +1,19 @@
-version: '3.8'
-services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    working_dir: /app
-    volumes:
-      # 开发模式：挂载源代码目录，但排除不需要挂载的文件夹
-      - .:/app
-      - /app/node_modules
-      - /app/.next
-    ports:
-      - "9000:9000"
-    environment:
-      - NODE_ENV=production
-      - TZ=Asia/Shanghai # 显式设置时区环境变量
-    # 提供开发环境启动选项
-    command: npm run start
-    restart: unless-stopped
+   version: '3.8'
+   services:
+     app:
+       build:
+         context: .
+         dockerfile: Dockerfile
+       working_dir: /app
+       volumes:
+         - .:/app
+         - /app/node_modules
+         # 不再使用 .next 的卷挂载
+       ports:
+         - "9000:9000"
+       environment:
+         - NODE_ENV=production
+         - TZ=Asia/Shanghai
+       # 使用最简单的构建和启动命令
+       command: sh -c "npm run build && npm run start"
+       restart: unless-stopped
