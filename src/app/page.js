@@ -1,6 +1,9 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { PUBLIC_URL } from "./util/config"
+
+const $fetch = (url, ...args) => fetch(`${PUBLIC_URL}${url}`, ...args)
 
 // 添加自定义动画到 Tailwind
 const customStyles = `
@@ -62,7 +65,7 @@ export default function Home() {
     const fetchMp3List = async () => {
         try {
             setIsLoading(true)
-            const response = await fetch("/podcaster/api/mp3")
+            const response = await $fetch("api/mp3")
             const data = await response.json()
             setTotal(data.total)
             setMp3List(data.mp3Files.map((x, index) => {
@@ -238,7 +241,7 @@ export default function Home() {
     const handleSyncPodcast = async () => {
         try {
             setIsLoading(true)
-            const response = await fetch("/podcaster/api/mp3", {
+            const response = await $fetch("api/mp3", {
                 method: "POST",
             })
 

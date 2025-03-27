@@ -8,7 +8,7 @@ const execPromise = promisify(exec)
 
 // 配置参数
 const config = {
-    backgroundMusic: path.resolve('./public/bg.mp3'),
+    backgroundMusic: path.resolve('./storage/bg.mp3'),
     tempPodcastFile: './temp_podcast.mp3',
     fadeInDuration: 1,        // 渐入时长（秒）
     fadeOutDuration: 3,       // 渐出时长（秒）
@@ -105,7 +105,7 @@ const mergeAudioFiles = async (bgMusicPath, podcastPath, outputPath) => {
         console.log(`需要循环背景音乐 ${loopCount} 次`)
 
         // 创建临时文件夹
-        const tempDir = path.resolve('public/temp')
+        const tempDir = path.resolve('storage/temp')
         if (!fs.existsSync(tempDir)) {
             fs.mkdirSync(tempDir, { recursive: true })
         }

@@ -3,10 +3,11 @@ import fs from "fs"
 import path from "path"
 import { fetchReadhubDaily } from '@/app/util/readhub.daily'
 import { submitTask } from '@/app/util/seedtts'
+import { PUBLIC_URL } from '@/app/util/config'
 
 
 // MP3 文件存储路径
-const MP3_DIR = path.join(process.cwd(), "public", "mp3")
+const MP3_DIR = path.join(process.cwd(), "storage", "mp3")
 
 // 确保 MP3 目录存在
 if (!fs.existsSync(MP3_DIR)) {
@@ -30,7 +31,7 @@ export async function GET(request) {
                 return {
                     id: file.replace(".mp3", ""),
                     name: file.replace(".mp3", "").replace(/-/g, " "),
-                    path: `/podcaster/mp3/${file}`,
+                    path: `${PUBLIC_URL}file/${file}`,
                     size: stats.size,
                     lastModified: stats.mtime,
                 }

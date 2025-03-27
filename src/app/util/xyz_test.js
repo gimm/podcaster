@@ -13,7 +13,7 @@ async function runExample() {
     const title = '测试播客标题 ' + new Date().toLocaleString()
 
     // 音频文件路径（请替换为实际文件路径）
-    const mp3path = '/app/public/mp3/2025-3-25.mp3'
+    const mp3path = '/app/storage/mp3/2025-3-25.mp3'
 
     // 日志函数
     const logger = message => console.log(`[${new Date().toLocaleTimeString()}] ${message}`)
