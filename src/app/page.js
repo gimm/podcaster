@@ -275,6 +275,32 @@ export default function Home() {
         }
     }
 
+    const getApi = () => {
+        const apiUrl = document.getElementById('apiUrl').value
+        if (apiUrl) {
+            window.localStorage.setItem('isAdmin', apiUrl)
+        }
+    }
+
+    const isAdmin = localStorage.getItem('isAdmin') === 'true'
+
+    if (!isAdmin) {
+        return (
+            <div className="min-h-screen text-black bg-white">
+                <div className="container mx-auto px-4 py-6">
+                    <h1 className="text-3xl font-bold mb-4">接口中心</h1>
+                    <div className="flex flex-col gap-4">
+                        <div className="flex items-center gap-2">
+                            <span className="text-gray-400">接口地址：</span>
+                            <input id="apiUrl" type="text" className="flex-1 px-3 py-2 rounded-md bg-gray-800 text-white" />
+                            <button className="px-4 py-2 rounded-md bg-blue-500 text-white" onClick={getApi}>获取接口</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-indigo-900 text-white">
             <style dangerouslySetInnerHTML={{ __html: customStyles }} />
