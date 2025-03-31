@@ -78,7 +78,7 @@ export async function POST() {
         // 如果文件存在，则返回
         if (fs.existsSync(filepath)) {
             return NextResponse.json({
-                success: true,
+                success: false,
                 message: "文件已存在",
             })
         }

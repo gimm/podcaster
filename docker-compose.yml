@@ -15,5 +15,5 @@
          - NODE_ENV=production
          - TZ=Asia/Shanghai
        # 使用最简单的构建和启动命令
-       command: sh -c "npm run build && npm run start"
+       command: sh -c "npm run build && npm run start && node cron.mjs"
        restart: unless-stopped
