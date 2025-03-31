@@ -1,52 +1,81 @@
 const fs = require('fs')
 const path = require('path')
 
-// 监听并拦截网络请求
-const updateTokens = async (jsonData, tokenDataInUse) => {
-    try {
-        const updateAt = new Date().toLocaleTimeString();
-        const data = jsonData
-        console.log('获取 TOKEN', updateAt, data);
-        // 提取新的token
-        const newAccessToken = data['x-jike-access-token']
-        const newRefreshToken = data['x-jike-refresh-token']
+const TOKEN_FILE_PATH = path.resolve(__dirname, 'token.json')
 
-        if (newAccessToken && newRefreshToken) {
-            // 读取当前token文件
-            const tokenPath = path.resolve(__dirname, 'token.json')
-            const tokenFile = fs.readFileSync(tokenPath, 'utf8')
-            const tokenData = JSON.parse(tokenFile)
 
-            // 更新token值
-            tokenFile.updateAt = updateAt
-            tokenData.accessToken = newAccessToken
-            tokenData.refreshToken = newRefreshToken
-
-            // 保存回文件
-            fs.writeFileSync(tokenPath, JSON.stringify(tokenData, null, 4), 'utf8')
-
-            console.log('令牌已自动更新')
-
-            // 更新请求头部的token
-            tokenDataInUse.accessToken = newAccessToken
-            tokenDataInUse.refreshToken = newRefreshToken
+const tokenSetup = async (context, page) => {
+    // 设置localStorage
+    await context.addInitScript(value => {
+        try {
+            window.localStorage.setItem('_jt', value)
+            console.log('localStorage 设置成功')
+        } catch (error) {
+            console.error('设置 localStorage 时出错:', error)
         }
+    }, getTokenFromStorage())
+
+    // 然后设置响应拦截
+    page.on('response', async response => {
+        if (response.request().resourceType() !== 'xhr' || !/app_auth_tokens/.test(response.url())) {
+            return
+        }
+
+        try {
+            const {
+                'x-jike-access-token': accessToken,
+                'x-jike-refresh-token': refreshToken
+            } = await response.json();
+            const updateAt = new Date().toLocaleString();
+            console.log('\n\n获取 TOKEN\n', updateAt);
+            // 提取新的token
+
+            if (accessToken && refreshToken) {
+                // 读取当前token文件
+                const token = btoa(JSON.stringify({
+                    accessToken,
+                    refreshToken
+                }))
+                const tokenObj = {
+                    updateAt,
+                    token,
+                }
+
+
+                // 保存回文件
+                fs.writeFileSync(TOKEN_FILE_PATH, JSON.stringify(tokenObj, null, 4), 'utf8')
+
+                // 更新localStorage
+                await page.evaluate(value => {
+                    try {
+                        window.localStorage.setItem('_jt', value)
+                        console.log('localStorage 设置成功')
+                    } catch (error) {
+                    }
+                }, token)
+                console.log('令牌已自动更新')
+            }
+        } catch (error) {
+            console.error('更新令牌时出错:', error)
+        }
+
+
+    });
+}
+
+
+const getTokenFromStorage = () => {
+    // 读取token文件
+    try {
+        const tokenContent = fs.readFileSync(path.join(process.cwd(), 'token.json'), 'utf8')
+        return JSON.parse(tokenContent).token
     } catch (error) {
-        console.error('更新令牌时出错:', error)
+        throw new Error(`无法读取token文件: ${error.message}`)
     }
 }
 
 
-const setupTokenRefreshInterceptor = (page, tokenDataInUse) => {
-    page.on('response', async response => {
-        if (response.request().resourceType() === 'xhr' && /app_auth_tokens/.test(response.url())) {
-            const data = await response.json();
-            updateTokens(data, tokenDataInUse);
-        }
-      });
-}
-
 // 导出功能
 module.exports = {
-    setupTokenRefreshInterceptor
+    tokenSetup,
 }

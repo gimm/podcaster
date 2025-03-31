@@ -3,8 +3,7 @@
 const { chromium } = require('playwright')
 const path = require('path')
 const fs = require('fs')
-const { setupTokenRefreshInterceptor } = require('./token')
-
+const { tokenSetup } = require('./token')
 
 /**
  * 小宇宙播客上传工具
@@ -13,7 +12,6 @@ const { setupTokenRefreshInterceptor } = require('./token')
  * @param {string} mp3path - MP3文件路径
  * @param {Object} options - 可选配置
  * @param {string} options.podcastId - 播客ID，默认为67c97140bfa2a84cabe29fe0
- * @param {string} options.tokenFile - token.json文件路径，默认为当前目录下的token.json
  * @param {boolean} options.headless - 是否以无头模式运行，默认为false
  * @param {string} options.chromePath - 自定义Chrome路径
  * @param {Function} options.logger - 日志函数，默认为console.log
@@ -32,7 +30,6 @@ async function xyzUploader(title, mp3path, options = {}) {
     // 默认配置
     const config = {
         podcastId: options.podcastId || '67c97140bfa2a84cabe29fe0',
-        tokenFile: options.tokenFile || path.join(process.cwd(), 'token.json'),
         headless: options.headless !== undefined ? options.headless : false,
         chromePath: options.chromePath,
         logger: options.logger || console.log
@@ -40,26 +37,12 @@ async function xyzUploader(title, mp3path, options = {}) {
 
     const log = config.logger
 
-    // 读取token文件
-    log('读取认证信息...')
-    let tokenData
-    try {
-        const tokenContent = fs.readFileSync(config.tokenFile, 'utf8')
-        tokenData = JSON.parse(tokenContent)
-    } catch (error) {
-        throw new Error(`无法读取token文件: ${error.message}`)
-    }
-
-    if (!tokenData.storage_jt || !tokenData.accessToken || !tokenData.refreshToken) {
-        throw new Error('token文件缺少必要的字段: storage_jt, accessToken, refreshToken')
-    }
 
     // 启动浏览器
     log('启动浏览器...')
 
     const browserOptions = {
         headless: config.headless,
-        slowMo: 50,
         args: [
             '--disable-gpu',
             '--disable-dev-shm-usage',
@@ -79,53 +62,44 @@ async function xyzUploader(title, mp3path, options = {}) {
         browser = await chromium.launch(browserOptions)
         const context = await browser.newContext()
 
-        // 设置请求拦截器
-        log('配置请求拦截器...')
-        await context.route('**/*', async route => {
-            const request = route.request()
-            const headers = {
-                ...request.headers(),
-                "accept": "application/json, text/plain, */*",
-                "accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7,zh;q=0.6",
-                "content-type": "application/json;charset=UTF-8",
-                "X-Jike-Access-Token": tokenData.accessToken,
-                "X-Jike-Refresh-Token": tokenData.refreshToken,
-                "X-Pid": config.podcastId
-            }
+        // const cookies = [
+        //     { name: '_jid', value: config.podcastId, url: 'https://podcaster.xiaoyuzhoufm.com' },
+        //     { name: '_jt', value: atob(getTokenStorage()), url: 'https://podcaster.xiaoyuzhoufm.com' },
+        // ];
+        // await context.addCookies(cookies)
 
-            route.continue({ headers })
-        })
+        // 设置请求拦截器
+        // log('配置请求拦截器...')
+        // await context.route(/^https:\/\/(podcaster-api|balloon)\.xiaoyuzhoufm\.com\/.*/, async route => {
+        //     const request = route.request()
+        //     const tokenObj = getTokenObj()
+        //     console.log('请求', tokenObj.refreshToken.slice(-10), request.url())
+        //     const headers = {
+        //         ...request.headers(),
+        //         "accept": "application/json, text/plain, */*",
+        //         "accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7,zh;q=0.6",
+        //         "content-type": "application/json;charset=UTF-8",
+        //         "X-Jike-Access-Token": tokenObj.accessToken,
+        //         "X-Jike-Refresh-Token": tokenObj.refreshToken,
+        //         "X-Pid": config.podcastId
+        //     }
+
+        //     route.continue({ headers })
+        // })
 
         // 创建新页面
         log('创建页面...')
         const page = await context.newPage()
 
-        setupTokenRefreshInterceptor(page, tokenData)
+        log('初始化localStorage...')
+        await tokenSetup(context, page)
 
-        // 设置localStorage
-        const localStorageScript = `
-        () => {
-            const baseUrl = 'https://podcaster.xiaoyuzhoufm.com';
-            const currentUrl = window.location.origin;
-            if (currentUrl.includes('xiaoyuzhoufm.com')) {
-                localStorage.setItem('_jt', '${tokenData.storage_jt}');
-                console.log('已设置 _jt 值到 localStorage');
-
-                if (!window._jtSet) {
-                    window._jtSet = true;
-                    location.reload();
-                }
-            }
-        }`;
 
         // 导航到目标URL
         log('导航到小宇宙发布页面...')
         const url = `https://podcaster.xiaoyuzhoufm.com/podcasts/${config.podcastId}/create/episode`
         await page.goto(url)
 
-        // 设置localStorage
-        log('设置认证信息...')
-        await page.evaluate(localStorageScript)
 
         // 等待页面加载完成
         log('等待页面加载完成...')
