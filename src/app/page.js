@@ -43,6 +43,8 @@ export default function Home() {
     const audioRef = useRef(null)
     const [toast, setToast] = useState(null)
 
+    const [isAdmin, setIsAdmin] = useState(false)
+
     // 从 localStorage 加载数据
     useEffect(() => {
         try {
@@ -283,7 +285,10 @@ export default function Home() {
         }
     }
 
-    const isAdmin = localStorage.getItem('isAdmin') === 'true'
+    useEffect(() => {
+        const isAdmin = localStorage.getItem('isAdmin') === 'true'
+        setIsAdmin(isAdmin)
+    }, [])
 
     if (!isAdmin) {
         return (
