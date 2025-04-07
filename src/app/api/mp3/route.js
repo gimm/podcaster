@@ -14,6 +14,29 @@ if (!fs.existsSync(MP3_DIR)) {
     fs.mkdirSync(MP3_DIR, { recursive: true })
 }
 
+// 定义元数据文件路径
+const METADATA_FILE = path.join(MP3_DIR, '..', "metadata.json")
+
+// 确保元数据文件存在
+const ensureMetadataFile = () => {
+    if (!fs.existsSync(METADATA_FILE)) {
+        fs.writeFileSync(METADATA_FILE, JSON.stringify({}), 'utf8')
+    }
+}
+
+// 保存元数据
+const saveMetadata = (id, title) => {
+    ensureMetadataFile()
+    const metadata = JSON.parse(fs.readFileSync(METADATA_FILE, 'utf8'))
+    metadata[id] = { title }
+    fs.writeFileSync(METADATA_FILE, JSON.stringify(metadata, null, 4), 'utf8')
+}
+
+// 获取元数据
+const getMetadata = () => {
+    ensureMetadataFile()
+    return JSON.parse(fs.readFileSync(METADATA_FILE, 'utf8'))
+}
 
 // 获取 MP3 文件列表
 export async function GET(request) {
@@ -22,15 +45,18 @@ export async function GET(request) {
     try {
         const files = fs.readdirSync(MP3_DIR)
         const total = files.length
+        const metadata = getMetadata()
 
         // 创建 Promise 数组
         const mp3FilesPromises = files
             .filter(file => file.endsWith(".mp3"))
             .map(file => {
+                const id = file.replace(".mp3", "")
                 const stats = fs.statSync(path.join(MP3_DIR, file))
                 return {
-                    id: file.replace(".mp3", ""),
-                    name: file.replace(".mp3", "").replace(/-/g, " "),
+                    id: id,
+                    name: id.replace(/-/g, " "),
+                    title: metadata[id]?.title || id.replace(/-/g, " "),
                     path: `${PUBLIC_URL}file/${file}`,
                     size: stats.size,
                     lastModified: stats.mtime,
@@ -58,10 +84,14 @@ export async function POST() {
     try {
 
         if (isDebug) {
-            const _id = `{debug${+Date.now()}`
+            const _id = `debug${+Date.now()}`
             const _filepath = path.join(MP3_DIR, `${_id}.mp3`)
             const _title = '这是一个 debug 测试'
             await submitTask(_title, '内容如下：这是一个 debug 测试', _filepath)
+
+            // 保存元数据
+            saveMetadata(_id, _title)
+
             return NextResponse.json({
                 success: true,
                 mp3Generating: {
@@ -107,6 +137,9 @@ export async function POST() {
 
         const title = news[0].title
         await submitTask(title, showNotes, filepath)
+
+        // 保存元数据
+        saveMetadata(id, title)
 
         return NextResponse.json({
             success: true,
