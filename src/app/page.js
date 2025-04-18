@@ -30,7 +30,6 @@ const customStyles = `
 const MP3_FILE_LIST_KEY = 'mp3FileMapKey'
 
 export default function Home() {
-    const [fileNameList, setFileNameList] = useState([])
     const [mp3Generating, setMp3Generating] = useState(null)
     const [total, setTotal] = useState(0)
     const [mp3List, setMp3List] = useState([])
@@ -48,12 +47,8 @@ export default function Home() {
     // 从 localStorage 加载数据
     useEffect(() => {
         try {
-            const storedList = localStorage.getItem(MP3_FILE_LIST_KEY)
-            if (storedList) {
-                setFileNameList(JSON.parse(storedList))
-            } else {
-                fetchMp3List()
-            }
+
+            fetchMp3List()
 
             const storedGenerating = localStorage.getItem('mp3Generating')
             if (storedGenerating) {
@@ -74,14 +69,7 @@ export default function Home() {
             setMp3List(data.mp3Files.map((x, index) => {
                 return {
                     ...x,
-                    title: `ep${data.total - index}. ${fileNameList.find(y => y.id === x.id)?.title || x.name}`
-                }
-            }))
-
-            console.log(data.mp3Files, fileNameList, data.mp3Files.map(x => {
-                return {
-                    ...x,
-                    title: fileNameList.find(y => y.id === x.id)?.title || x.name
+                    title: `ep${data.total - index}. ${x.title || x.name}`
                 }
             }))
 
@@ -211,13 +199,6 @@ export default function Home() {
         minute: '2-digit',
     })
 
-    // 初始加载
-    useEffect(() => {
-        if (fileNameList?.length === 0) {
-            return
-        }
-        fetchMp3List()
-    }, [fileNameList])
 
     // 添加自动刷新功能
     useEffect(() => {
@@ -254,9 +235,7 @@ export default function Home() {
                 if (data.mp3Generating) {
                     setMp3Generating(data.mp3Generating)
                     localStorage.setItem('mp3Generating', JSON.stringify(data.mp3Generating))
-                    const newFileNameList = [data.mp3Generating, ...fileNameList].slice(0, 100)
-                    localStorage.setItem(MP3_FILE_LIST_KEY, JSON.stringify(newFileNameList))
-                    setFileNameList(newFileNameList)
+
                     setToast({
                         type: 'success',
                         message: `添加成功`

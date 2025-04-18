@@ -15,7 +15,7 @@ if (!fs.existsSync(MP3_DIR)) {
 }
 
 // 定义元数据文件路径
-const METADATA_FILE = path.join(MP3_DIR, '..', "metadata.json")
+const METADATA_FILE = path.join(process.cwd(), "storage", "metadata.json")
 
 // 确保元数据文件存在
 const ensureMetadataFile = () => {
